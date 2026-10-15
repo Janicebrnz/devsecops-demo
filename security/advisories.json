@@ -1,0 +1,7 @@
+{
+  "pyyaml":   {"fixed": "5.4",    "cve": "CVE-2020-14343"},
+  "requests": {"fixed": "2.31.0", "cve": "CVE-2023-32681"},
+  "flask":    {"fixed": "2.2.5",  "cve": "CVE-2023-30861"},
+  "jinja2":   {"fixed": "2.11.3", "cve": "CVE-2020-28493"},
+  "urllib3":  {"fixed": "1.26.5", "cve": "CVE-2021-33503"}
+}
