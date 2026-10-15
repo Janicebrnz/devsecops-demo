@@ -3,24 +3,25 @@ pipeline {
     options { timestamps(); buildDiscarder(logRotator(numToKeepStr: '10')) }
 
     environment {
-    PY      = 'C:\\Users\\barne\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
-    GH_REPO = 'github.com/Janicebrnz/Devops.git'
-    GH_CRED = 'github-creds'
-}
+        PY      = 'C:\\Users\\barne\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+        GH_REPO = 'github.com/Janicebrnz/Devops.git'
+        GH_CRED = 'github-creds'
+    }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                sh 'python3 --version && mkdir -p reports'
+                bat '%PY% --version'
+                bat 'if not exist reports mkdir reports'
             }
         }
 
         stage('SAST: OWASP Scan') {
             steps {
                 script {
-                    env.SCAN_RC = sh(script: 'python3 security/owasp_scan.py --report reports/before',
-                                     returnStatus: true).toString()
+                    env.SCAN_RC = bat(script: '@%PY% security/owasp_scan.py --report reports/before',
+                                      returnStatus: true).toString()
                 }
             }
         }
@@ -28,23 +29,22 @@ pipeline {
         stage('Auto-Remediate') {
             when { expression { env.SCAN_RC != '0' } }
             steps {
-                sh 'python3 security/owasp_scan.py --fix'
-                sh 'git diff > reports/fixes.patch || true'
-                sh 'cat reports/fixes.patch'
+                bat '%PY% security/owasp_scan.py --fix'
+                bat 'git diff > reports\\fixes.patch'
+                bat 'type reports\\fixes.patch'
             }
         }
 
         stage('Re-Scan Gate') {
             when { expression { env.SCAN_RC != '0' } }
             steps {
-                // Fails the build if anything that needs a human fix is still present
-                sh 'python3 security/owasp_scan.py --report reports/after'
+                bat '%PY% security/owasp_scan.py --report reports/after'
                 unstable('Vulnerabilities were found and auto-remediated')
             }
         }
 
         stage('Security Regression Tests') {
-            steps { sh 'python3 -m unittest discover -s tests -v' }
+            steps { bat '%PY% -m unittest discover -s tests -v' }
         }
 
         stage('Push Fix Branch') {
@@ -52,13 +52,13 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: env.GH_CRED,
                                  usernameVariable: 'GH_USER', passwordVariable: 'GH_TOKEN')]) {
-                    sh '''
+                    bat '''
                         git config user.email "jenkins-bot@example.com"
-                        git config user.name  "Jenkins DevSecOps Bot"
+                        git config user.name "Jenkins DevSecOps Bot"
                         git checkout -B security-autofix
                         git add -A
-                        git commit -m "security: auto-remediate OWASP findings" || true
-                        git push -f https://${GH_USER}:${GH_TOKEN}@${GH_REPO} security-autofix
+                        git commit -m "security: auto-remediate OWASP findings" || echo nothing to commit
+                        git push -f https://%GH_USER%:%GH_TOKEN%@%GH_REPO% security-autofix
                     '''
                 }
             }
