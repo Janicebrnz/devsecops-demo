@@ -3,10 +3,10 @@ pipeline {
     options { timestamps(); buildDiscarder(logRotator(numToKeepStr: '10')) }
 
     environment {
-        // CHANGE THESE TWO
-        GH_REPO = 'github.com/Janicebrnz/devsecops-demo.git'
-        GH_CRED = 'github-creds'        // Jenkins "Username with password" credential (PAT as password)
-    }
+    PY      = 'C:\\Users\\barne\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+    GH_REPO = 'github.com/Janicebrnz/Devops.git'
+    GH_CRED = 'github-creds'
+}
 
     stages {
         stage('Checkout') {
